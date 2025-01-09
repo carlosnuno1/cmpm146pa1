@@ -1,0 +1,31 @@
+1. Identify start and goal box
+    - scan through list to find source point
+    - scan through list to find goal point
+    - return two boxes
+
+2. Simplest working search
+    - create dict table to keep track of x,y (distance table)
+    - Check max and mins of boxes before moving
+    - Check diagram
+    - identify x and y ranges of boxes
+    - find x range of border [max(b1x1, b2x1), min(b1x2, b2x2)]
+    - use euclidean distances check doc under diagram
+
+3. Modify Dijstra's to A*
+    - find where new cells/boxes into the priorty queue
+    - Instead of using distance as priority, use estimated distance remaing (predictive nature)
+    - Check doc
+    - when dequeing boxds from priority queue, remember priotirty value is not distance
+    - Check doc last point for checking A* works
+
+4. Modify A* for bidirectional
+    - copy code for reference
+    - make copys of distance and previous pointer tables, Don't duplicate the queue
+    - find priority queue
+    - instead of only ennqueeing the source box, also enqueue the destination box
+    - modify queue operations for extra representation that keeps track of the goal
+    - change which point you are estimateing based on the stated goal you dequeued
+    - Check doc change when termination
+    - adjust final path reconstruction to take into account both paths discovered
+
+5. create custom map
