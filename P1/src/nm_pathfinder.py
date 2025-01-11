@@ -1,4 +1,5 @@
 from queue import Queue
+import math
 
 def find_path (source_point, destination_point, mesh):
 
@@ -18,6 +19,7 @@ def find_path (source_point, destination_point, mesh):
 
     path = []
     boxes = {}
+    detail_points = {}
     
     source_box = None
     destination_box = None
@@ -35,9 +37,11 @@ def find_path (source_point, destination_point, mesh):
     for box in mesh['boxes']:
         if in_box(source_point, box):   # check if point in box
             source_box = box    # save box to source_box
+            detail_points[box] = source_point
             boxes[box] = True   # mark box as searched
         if in_box(destination_point, box):
             destination_box = box   #same thing for destination
+            detail_points[box] = destination_point
             boxes[box] = True
 
     # Check if boxes found and print if not found
@@ -61,17 +65,41 @@ def find_path (source_point, destination_point, mesh):
     while not queue.empty():
         current = queue.get()
 
-        # Check if current box is the goal, if so return
+        # Check if current node is in the destination box
         if current == destination_box:
-            print("Path found!")
-            return path, boxes.keys()
+            break
+        
+        print(f"Current box: {current}") # Debug: Print current box coords
 
-        # Look at neighboring boxes of the current box
-        for next in mesh['adj'][current]:
-            if next not in came_from:
-                queue.put(next)
-                came_from[next] = current
+        # Search every box adjacent to the current box 
+        for neighbor in mesh['adj'][current]:
+            if neighbor not in came_from:
+                # Calculate the new detail point constrained to the neighbor's box
+                current_point = detail_points[current]
+                neighbor_x = max(neighbor[0], min(current_point[0], neighbor[1]))  # Constrain x
+                neighbor_y = max(neighbor[2], min(current_point[1], neighbor[3]))  # Constrain y
+                detail_points[neighbor] = (neighbor_x, neighbor_y)
 
-    print("No path!")
-    return [], boxes.keys()
+                # Mark the neighbor as visited
+                queue.put(neighbor)
+                came_from[neighbor] = current
+
+    # Reconstruct the path
+    # The path has the destination point
+    if destination_box in came_from:
+        # Put the points into the path list
+        current = destination_box
+        while current is not None:
+            path.append(detail_points[current])
+            current = came_from[current]
+
+        # Reverse the list since the points were inserted backwards
+        path.reverse()
+
+        return path, list(detail_points.keys())
+
+    # The path did not have the destination point
+    else:
+        print("No path found!")
+        return [], list(boxes.keys())
 
