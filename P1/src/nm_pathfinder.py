@@ -1,3 +1,5 @@
+from queue import Queue
+
 def find_path (source_point, destination_point, mesh):
 
     """
@@ -48,4 +50,28 @@ def find_path (source_point, destination_point, mesh):
     print(f"Source box: {source_box}")
     print(f"Destination box: {destination_box}")
     
-    return path, boxes.keys()
+
+    # BFS Setup
+    queue = Queue()
+    queue.put(source_box)
+    came_from = {}
+    came_from[source_box] = None
+
+    # BFS
+    while not queue.empty():
+        current = queue.get()
+
+        # Check if current box is the goal, if so return
+        if current == destination_box:
+            print("Path found!")
+            return path, boxes.keys()
+
+        # Look at neighboring boxes of the current box
+        for next in mesh['adj'][current]:
+            if next not in came_from:
+                queue.put(next)
+                came_from[next] = current
+
+    print("No path!")
+    return [], boxes.keys()
+
