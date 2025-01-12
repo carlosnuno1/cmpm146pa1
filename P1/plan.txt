@@ -18,6 +18,8 @@
     - when dequeing boxds from priority queue, remember priotirty value is not distance
     - Check doc last point for checking A* works
 
+^DONE
+
 4. Modify A* for bidirectional
     - copy code for reference
     - make copys of distance and previous pointer tables, Don't duplicate the queue
@@ -28,4 +30,4 @@
     - Check doc change when termination
     - adjust final path reconstruction to take into account both paths discovered
 
-5. create custom map
+5. create custom map (Optional)
