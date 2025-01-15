@@ -3,7 +3,6 @@ from heapq import heappush, heappop
 import math
 
 def find_path(source_point, destination_point, mesh):
-
     """
     Searches for a path from source_point to destination_point through the mesh
 
@@ -17,7 +16,17 @@ def find_path(source_point, destination_point, mesh):
         A list of boxes explored by the algorithm
     """
 
+    search_choice = input("Enter 1 for Regular A* or 2 for Bidirectional A*: ")
 
+    if search_choice == "1":
+        return regular_a_star(source_point, destination_point, mesh)
+    elif search_choice == "2":
+        return bidirectional_a_star(source_point, destination_point, mesh)
+    else:
+        print("Invalid choice. Please enter 1 or 2.")
+        return [], []
+
+def regular_a_star(source_point, destination_point, mesh):
     path = []
     boxes = {}
     detail_points = {}
@@ -65,9 +74,6 @@ def find_path(source_point, destination_point, mesh):
     def heuristic(point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-
-    # regular a*
-
     # Priority queue for the frontier
     frontier = []
     heappush(frontier, (0, source_box))
@@ -104,11 +110,57 @@ def find_path(source_point, destination_point, mesh):
     print("No path found!")
     return [], list(detail_points.keys())
 
-    # bidirectional
+def bidirectional_a_star(source_point, destination_point, mesh):
+    path = []
+    boxes = {}
+    detail_points = {}
+
+    source_box = None
+    destination_box = None
+
+    # Extracting boxes within the mesh
+    all_boxes = mesh['boxes']
+
+    # Check x and y values of box to see if it holds a point
+    def in_box(point, box):
+        x1, x2, y1, y2 = box
+        x, y = point
+        return x1 <= x < x2 and y1 <= y < y2
+
+    # Constrain logic so points stay within box
+    def constrain_point_to_box(point, box):
+        x1, x2, y1, y2 = box
+        x, y = point
+        constrained_x = max(x1, min(x, x2))
+        constrained_y = max(y1, min(y, y2))
+        return (constrained_x, constrained_y)
+
+    # Iterating through list of boxes to find which box contains the source and destination points
+    for box in all_boxes:
+        if in_box(source_point, box):  # Check if point is in box
+            source_box = box  # Save box to source_box
+            detail_points[box] = source_point
+            boxes[box] = True  # Mark box as searched
+        if in_box(destination_point, box):
+            destination_box = box  # Same thing for destination
+            detail_points[box] = destination_point
+            boxes[box] = True
+
+    # Check if boxes found and print if not found
+    if source_box is None or destination_box is None:
+        print("No source and/or No destination point found")
+        return [], list(boxes.keys())
+
+    print(f"Source point: {source_point}")
+    print(f"Destination point: {destination_point}")
 
     # Check if the two points are in the same box
     if source_box == destination_box:
         return [source_point, destination_point], [source_box]
+
+    # Heuristic function (Euclidean distance)
+    def heuristic(point1, point2):
+        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
     # Frontier for both directions
     forward_frontier = []
@@ -184,17 +236,14 @@ def find_path(source_point, destination_point, mesh):
         current = forward_prev[current]
     path.reverse()
 
-    # Reconstruct path from meet box to destination
     current = backward_prev[meeting_box]
     while current is not None:
         path.append(detail_points[current])
         current = backward_prev[current]
 
-    # Check path goes from source to destination
     if path[0] != source_point:
         path.insert(0, source_point)
     if path[-1] != destination_point:
         path.append(destination_point)
 
-    print("PATH FOUND")
     return path, list(detail_points.keys())
