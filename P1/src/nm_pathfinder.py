@@ -2,7 +2,7 @@ from queue import Queue
 from heapq import heappush, heappop
 import math
 
-def find_path (source_point, destination_point, mesh):
+def find_path(source_point, destination_point, mesh):
 
     """
     Searches for a path from source_point to destination_point through the mesh
@@ -13,7 +13,6 @@ def find_path (source_point, destination_point, mesh):
         mesh: pathway constraints the path adheres to
 
     Returns:
-
         A path (list of points) from source_point to destination_point if exists
         A list of boxes explored by the algorithm
     """
@@ -21,241 +20,139 @@ def find_path (source_point, destination_point, mesh):
     path = []
     boxes = {}
     detail_points = {}
-    
+
     source_box = None
     destination_box = None
-    
-    # extracting boxes within the mesh
+
+    # Extracting boxes within the mesh
     all_boxes = mesh['boxes']
 
-    # check x and y values of box to see if it holds a point
+    # Check x and y values of box to see if it holds a point
     def in_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
-        return x1 <= x <x2 and y1 <= y <y2
+        return x1 <= x < x2 and y1 <= y < y2
 
-    #iterating through list of boxes to find which box contains the source and destination points
+    # constrain logic so points stay within box
+    def constrain_point_to_box(point, box):
+        x1, x2, y1, y2 = box
+        x, y = point
+        constrained_x = max(x1, min(x, x2))
+        constrained_y = max(y1, min(y, y2))
+        return (constrained_x, constrained_y)
+
+    # Iterating through list of boxes to find which box contains the source and destination points
     for box in mesh['boxes']:
-        if in_box(source_point, box):   # check if point in box
-            source_box = box    # save box to source_box
+        if in_box(source_point, box):  # Check if point in box
+            source_box = box  # Save box to source_box
             detail_points[box] = source_point
-            boxes[box] = True   # mark box as searched
+            boxes[box] = True  # Mark box as searched
         if in_box(destination_point, box):
-            destination_box = box   #same thing for destination
+            destination_box = box  # Same thing for destination
             detail_points[box] = destination_point
             boxes[box] = True
 
     # Check if boxes found and print if not found
-    if source_box == None or destination_box == None:   
+    if source_box is None or destination_box is None:
         print("No source and/or No destination point found")
         return [], boxes.keys()
-    
 
-    # Debug: Print identified boxes
-    # print(f"Source box: {source_box}")
-    # print(f"Destination box: {destination_box}")
     print(f"Source point: {source_point}")
-    print(f"Desintation point: {destination_point}")
-    
-    # BFS (Steps 2 and 3)
-    """
-    # BFS Setup
-    queue = Queue()
-    queue.put(source_box)
-    came_from = {}
-    came_from[source_box] = None
-
-    # BFS
-    while not queue.empty():
-        current = queue.get()
-
-        # Check if current node is in the destination box
-        if current == destination_box:
-            break
-        
-        print(f"Current box: {current}") # Debug: Print current box coords
-
-        # Search every box adjacent to the current box 
-        for neighbor in mesh['adj'][current]:
-            if neighbor not in came_from:
-                # Calculate the new detail point constrained to the neighbor's box
-                current_point = detail_points[current]
-                neighbor_x = max(neighbor[0], min(current_point[0], neighbor[1]))  # Constrain x
-                neighbor_y = max(neighbor[2], min(current_point[1], neighbor[3]))  # Constrain y
-                detail_points[neighbor] = (neighbor_x, neighbor_y)
-
-                # Mark the neighbor as visited
-                queue.put(neighbor)
-                came_from[neighbor] = current
-
-
-    # Reconstruct the path
-    # The path has the destination point
-    if destination_box in came_from:
-        # Put the points into the path list
-        current = destination_box
-        while current is not None:
-            path.append(detail_points[current])
-            current = came_from[current]
-
-        # Reverse the list since the points were inserted backwards
-        path.reverse()
-
-        return path, list(detail_points.keys())
-    """
-
-    # A* (Step 4)
-    """
-    # calculate eudclidean distance
-    def heuristic(box):
-        box_center = ((box[0] + box[1]) / 2, (box[2] + box[3]) / 2)
-        return math.sqrt((box_center[0] - destination_point[0])**2 + (box_center[1] - destination_point[1])**2)
-
-    # A* Search
-    frontier = []
-    heappush(frontier, (0, source_box))
-    came_from = {source_box: None}
-    goal_score = {source_box: 0}
-
-    # iterate through boxes
-    while frontier:
-        _, current = heappop(frontier)
-
-        # if box found
-        if current == destination_box:
-            # Reconstruct path
-            while current is not None:
-                path.append(detail_points[current])
-                current = came_from[current]
-            path.reverse()
-
-            # path goes all the way to destination point
-            if path[-1] != destination_point:
-                path.append(destination_point)
-            return path, list(detail_points.keys())
-
-        print(f"Current box: {current}") # Debug: Print current box coords
-
-        # explore adjacent boxes
-        for neighbor in mesh['adj'][current]:
-            possible_goal_score = goal_score[current] + heuristic(neighbor)     # calculate goal score
-            
-            # if neighbor unvisted jor path is better than previous
-            if neighbor not in goal_score or possible_goal_score < goal_score[neighbor]:
-                goal_score[neighbor] = possible_goal_score  # update goal score
-                came_from[neighbor] = current   # update path to neighbor
-
-                # lock point do bounds of box
-                current_point = detail_points[current]
-                neighbor_x = max(neighbor[0], min(current_point[0], neighbor[1]))
-                neighbor_y = max(neighbor[2], min(current_point[1], neighbor[3]))
-                detail_points[neighbor] = (neighbor_x, neighbor_y)
-
-                # calculate f score and add neighbor to queue
-                f_score = possible_goal_score + heuristic(neighbor)
-                heappush(frontier, (f_score, neighbor))
-
-# if queue empty and destination not reached 
-    else:
-        print("No path found!")
-        return [], list(boxes.keys())
-    """
+    print(f"Destination point: {destination_point}")
 
     # Check if the two points are in the same box
     if source_box == destination_box:
         return [source_point, destination_point], [source_box]
 
-    # Bidirectional A*
-    # Euclidean distance
-    def heuristic(box, goal_point):
-        box_center = ((box[0] + box[1]) / 2, (box[2] + box[3]) / 2)
-        return math.sqrt((box_center[0] - goal_point[0])**2 + (box_center[1] - goal_point[1])**2)
+    # Heuristic function (Euclidean distance)
+    def heuristic(point1, point2):
+        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-    # Bidirection A* setup
-    frontier = []
-    heappush(frontier, (0, source_box, 'destination'))
-    heappush(frontier, (0, destination_box, 'source'))
+    # Frontier for both directions
+    forward_frontier = []
+    backward_frontier = []
 
-    # Forward and backward search data
-    forward_prev = {source_box: None}
-    backward_prev = {destination_box: None}
+    heappush(forward_frontier, (0, source_box))
+    heappush(backward_frontier, (0, destination_box))
+
+    # Distance maps for both directions
     forward_dist = {source_box: 0}
     backward_dist = {destination_box: 0}
+
+    # Previous pointers for path reconstruction
+    forward_prev = {source_box: None}
+    backward_prev = {destination_box: None}
 
     meeting_box = None
 
     # Bidirectional A* Search
-    while frontier:
-        f_score, current, goal = heappop(frontier)
-        print(goal)
+    while forward_frontier and backward_frontier:
+        # Expand forward frontier
+        _, current_forward = heappop(forward_frontier)
 
-        # Forwards search
-        if goal == 'destination':
-            current_prev = forward_prev
-            current_dist = forward_dist
-            other_prev = backward_prev
-            current_goal_point = destination_point
+        for neighbor in mesh['adj'][current_forward]:
 
-        # Backwards search
-        else:
-            current_prev = backward_prev
-            current_dist = backward_dist
-            other_prev = forward_prev
-            current_goal_point = source_point
+            if neighbor not in boxes:
+                neighbor_point = constrain_point_to_box(detail_points[current_forward], neighbor)
+                tentative_dist = forward_dist[current_forward] + heuristic(detail_points[current_forward], neighbor_point)
 
-        # Check if the other search direction has already visited this box
-        if current in other_prev:
-            meeting_box = current
+                if neighbor not in forward_dist or tentative_dist < forward_dist[neighbor]:
+                    forward_dist[neighbor] = tentative_dist
+                    forward_prev[neighbor] = current_forward
+                    detail_points[neighbor] = neighbor_point
+                    heappush(forward_frontier, (tentative_dist + heuristic(neighbor_point, destination_point), neighbor))
+
+                    if neighbor in backward_prev:
+                        meeting_box = neighbor
+                        break
+
+        if meeting_box:
             break
 
-        # Explore neighbors
-        for neighbor in mesh['adj'][current]:
-            neighbor_x = max(neighbor[0], min(detail_points[current][0], neighbor[1]))
-            neighbor_y = max(neighbor[2], min(detail_points[current][1], neighbor[3]))
+        # Expand backward frontier
+        _, current_backward = heappop(backward_frontier)
+        for neighbor in mesh['adj'][current_backward]:
 
-            tentative_dist = current_dist[current] + heuristic(current, detail_points[current])
+            if neighbor not in boxes:
+                neighbor_point = constrain_point_to_box(detail_points[current_backward], neighbor)
+                tentative_dist = backward_dist[current_backward] + heuristic(detail_points[current_backward], neighbor_point)
 
-            # If this path new neighbor is shorter or unvisited, update details
-            if neighbor not in current_dist or tentative_dist < current_dist[neighbor]:
-                current_dist[neighbor] = tentative_dist
-                current_prev[neighbor] = current
-                detail_points[neighbor] = (neighbor_x, neighbor_y)
+                if neighbor not in backward_dist or tentative_dist < backward_dist[neighbor]:
+                    backward_dist[neighbor] = tentative_dist
+                    backward_prev[neighbor] = current_backward
+                    detail_points[neighbor] = neighbor_point
+                    heappush(backward_frontier, (tentative_dist + heuristic(neighbor_point, source_point), neighbor))
 
-                f_score = tentative_dist + heuristic(neighbor, current_goal_point)
-                heappush(frontier, (f_score, neighbor, goal))
+                    if neighbor in forward_prev:
+                        meeting_box = neighbor
+                        break
 
-    # Check if meeting was found, if not, then no path was found
+        if meeting_box:
+            break
+
+    # Check if meeting box was found
     if not meeting_box:
         print("No path found!")
         return [], list(detail_points.keys())
 
-    # # Path reconstruction
-    path = []
-
-    # Reconstructing forward path from source to meeting points
+    # Reconstruct path from source to meet box
     current = meeting_box
-    # print(forward_prev)
     while current is not None:
         path.append(detail_points[current])
         current = forward_prev[current]
     path.reverse()
 
-    # Reconstruct the backward path from meeting to destination points
+    # Reconstruct path from meet box to destination
     current = backward_prev[meeting_box]
-    # print(backward_prev)
     while current is not None:
         path.append(detail_points[current])
         current = backward_prev[current]
 
-    # Ensure the path includes the source and destination points
+    # Check path goes from source to destination
     if path[0] != source_point:
         path.insert(0, source_point)
     if path[-1] != destination_point:
         path.append(destination_point)
-    
-    # Debug: Print the path list
-    # print(detail_points)
-    print(path)
-    print("PATH FOUND")
 
+    print("PATH FOUND")
     return path, list(detail_points.keys())
