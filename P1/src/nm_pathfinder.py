@@ -17,6 +17,7 @@ def find_path(source_point, destination_point, mesh):
         A list of boxes explored by the algorithm
     """
 
+
     path = []
     boxes = {}
     detail_points = {}
@@ -33,7 +34,7 @@ def find_path(source_point, destination_point, mesh):
         x, y = point
         return x1 <= x < x2 and y1 <= y < y2
 
-    # constrain logic so points stay within box
+    # Constrain logic so points stay within box
     def constrain_point_to_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
@@ -42,8 +43,8 @@ def find_path(source_point, destination_point, mesh):
         return (constrained_x, constrained_y)
 
     # Iterating through list of boxes to find which box contains the source and destination points
-    for box in mesh['boxes']:
-        if in_box(source_point, box):  # Check if point in box
+    for box in all_boxes:
+        if in_box(source_point, box):  # Check if point is in box
             source_box = box  # Save box to source_box
             detail_points[box] = source_point
             boxes[box] = True  # Mark box as searched
@@ -55,18 +56,59 @@ def find_path(source_point, destination_point, mesh):
     # Check if boxes found and print if not found
     if source_box is None or destination_box is None:
         print("No source and/or No destination point found")
-        return [], boxes.keys()
+        return [], list(boxes.keys())
 
     print(f"Source point: {source_point}")
     print(f"Destination point: {destination_point}")
 
-    # Check if the two points are in the same box
-    if source_box == destination_box:
-        return [source_point, destination_point], [source_box]
-
     # Heuristic function (Euclidean distance)
     def heuristic(point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+
+
+    # regular a*
+
+    # Priority queue for the frontier
+    frontier = []
+    heappush(frontier, (0, source_box))
+
+    # Distance map and previous map for path reconstruction
+    g_score = {source_box: 0}
+    came_from = {source_box: None}
+
+    while frontier:
+        _, current = heappop(frontier)
+
+        # If destination is reached, reconstruct the path
+        if current == destination_box:
+            while current is not None:
+                path.append(detail_points[current])
+                current = came_from[current]
+            path.reverse()
+            path.append(destination_point)
+            return path, list(detail_points.keys())
+
+        # Explore neighbors
+        for neighbor in mesh['adj'][current]:
+            neighbor_point = constrain_point_to_box(detail_points[current], neighbor)
+            tentative_g_score = g_score[current] + heuristic(detail_points[current], neighbor_point)
+
+            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                g_score[neighbor] = tentative_g_score
+                came_from[neighbor] = current
+                detail_points[neighbor] = neighbor_point
+                f_score = tentative_g_score + heuristic(neighbor_point, destination_point)
+                heappush(frontier, (f_score, neighbor))
+
+    # If no path is found
+    print("No path found!")
+    return [], list(detail_points.keys())
+
+    # bidirectional
+
+    # Check if the two points are in the same box
+    if source_box == destination_box:
+        return [source_point, destination_point], [source_box]
 
     # Frontier for both directions
     forward_frontier = []
