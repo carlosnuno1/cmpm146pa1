@@ -34,16 +34,16 @@ def regular_a_star(source_point, destination_point, mesh):
     source_box = None
     destination_box = None
 
-    # Extracting boxes within the mesh
+    # Extract boxes from mesh
     all_boxes = mesh['boxes']
 
-    # Check x and y values of box to see if it holds a point
+    # Check if box holds point
     def in_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
         return x1 <= x < x2 and y1 <= y < y2
 
-    # Constrain logic so points stay within box
+    # Constrain point to box
     def constrain_point_to_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
@@ -51,7 +51,7 @@ def regular_a_star(source_point, destination_point, mesh):
         constrained_y = max(y1, min(y, y2))
         return (constrained_x, constrained_y)
 
-    # Iterating through list of boxes to find which box contains the source and destination points
+    # Iterating through list of boxes to find which boxes have the source and destination points
     for box in all_boxes:
         if in_box(source_point, box):  # Check if point is in box
             source_box = box  # Save box to source_box
@@ -118,16 +118,16 @@ def bidirectional_a_star(source_point, destination_point, mesh):
     source_box = None
     destination_box = None
 
-    # Extracting boxes within the mesh
+    # Extract boxes from mesh
     all_boxes = mesh['boxes']
 
-    # Check x and y values of box to see if it holds a point
+    # Check if point in box
     def in_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
         return x1 <= x < x2 and y1 <= y < y2
 
-    # Constrain logic so points stay within box
+    # Constrain points to box
     def constrain_point_to_box(point, box):
         x1, x2, y1, y2 = box
         x, y = point
@@ -135,7 +135,7 @@ def bidirectional_a_star(source_point, destination_point, mesh):
         constrained_y = max(y1, min(y, y2))
         return (constrained_x, constrained_y)
 
-    # Iterating through list of boxes to find which box contains the source and destination points
+    # Iterating through list of boxes to find which boxes have the source and destination points
     for box in all_boxes:
         if in_box(source_point, box):  # Check if point is in box
             source_box = box  # Save box to source_box
